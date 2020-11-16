@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"frostwagner/structures"
 	"log"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -14,11 +15,15 @@ type Task structures.Task
 const (
 	tableName = "tasks"
 	driver    = "sqlite3"
-	file      = "../../db/todolist.db"
 )
 
+func getPath() string {
+	home := fmt.Sprintf("%s/todolist", os.Getenv("HOME"))
+	return home
+}
+
 func CreateTable() {
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,7 +38,7 @@ func CreateTable() {
 }
 
 func CreateTask(description *string) {
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		log.Print(err)
 		return
@@ -51,7 +56,7 @@ func CreateTask(description *string) {
 
 func GetList() *[]Task {
 	tasks := make([]Task, 0)
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		log.Println(err)
 		return &tasks
@@ -73,7 +78,7 @@ func GetList() *[]Task {
 }
 
 func DeleteTask(id int) {
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -90,7 +95,7 @@ func DeleteTask(id int) {
 }
 
 func UpdateTaskDone(task *Task) {
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		log.Println(err)
 		return
@@ -103,7 +108,7 @@ func UpdateTaskDone(task *Task) {
 }
 
 func UpdateTaskDescription(task *Task) {
-	db, err := sql.Open(driver, file)
+	db, err := sql.Open(driver, getPath())
 	if err != nil {
 		log.Println(err)
 		return

@@ -29,7 +29,9 @@ func ReadList(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "null")
 		return
 	}
-	fmt.Fprintf(w, string(jsonData))
+	// fmt.Fprintf(w, string(jsonData))
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 }
 
 func RemoveTask(w http.ResponseWriter, req *http.Request) {
