@@ -22,36 +22,37 @@ func getPath() string {
 	return home
 }
 
-func CreateTable() {
-	db, err := sql.Open(driver, getPath())
+func errHandle(err error) bool {
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return true
+	}
+	return false
+}
+
+func doCall(query string) {
+	db, err := sql.Open(driver, getPath())
+	if errHandle(err) {
+		return
 	}
 	defer db.Close()
 
-	statement, _ := db.Prepare(fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (description TEXT, done BOOLEAN)", tableName))
-	if err != nil {
-		log.Fatal(err)
+	statement, err := db.Prepare(query)
+	if errHandle(err) {
+		return
 	}
 	statement.Exec()
 	statement.Close()
 }
 
-func CreateTask(description *string) {
-	db, err := sql.Open(driver, getPath())
-	if err != nil {
-		log.Print(err)
-		return
-	}
-	defer db.Close()
+func CreateTable() {
+	query := fmt.Sprintf("CREATE TABLE IF NOT EXISTS %s (description TEXT, done BOOLEAN)", tableName)
+	doCall(query)
+}
 
-	insert, err := db.Prepare(fmt.Sprintf("INSERT INTO %s VALUES (?, ?)", tableName))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	insert.Exec(description, false)
-	insert.Close()
+func CreateTask(description *string) {
+	query := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", %v)", tableName, *description, false)
+	doCall(query)
 }
 
 func GetList() *[]Task {
@@ -78,48 +79,16 @@ func GetList() *[]Task {
 }
 
 func DeleteTask(id int) {
-	db, err := sql.Open(driver, getPath())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer db.Close()
-
-	statement, err := db.Prepare(fmt.Sprintf("DELETE FROM %s WHERE rowid = ?", tableName))
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	statement.Exec(id)
-	statement.Close()
+	query := fmt.Sprintf("DELETE FROM %s WHERE rowid = %d", tableName, id)
+	doCall(query)
 }
 
 func UpdateTaskDone(task *Task) {
-	db, err := sql.Open(driver, getPath())
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer db.Close()
-
-	statement, err := db.Prepare(fmt.Sprintf("UPDATE %s SET done = ? WHERE rowid = ?", tableName))
-	statement.Exec(task.Done, task.Id)
-	statement.Close()
+	query := fmt.Sprintf("UPDATE %s SET done = %v WHERE rowid = %d", tableName, task.Done, task.Id)
+	doCall(query)
 }
 
 func UpdateTaskDescription(task *Task) {
-	db, err := sql.Open(driver, getPath())
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer db.Close()
-
-	statement, err := db.Prepare(fmt.Sprintf("UPDATE %s SET description = ? WHERE rowid = ?", tableName))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	statement.Exec(task.Description, task.Id)
-	statement.Close()
+	query := fmt.Sprintf("UPDATE %s SET description = \"%s\" WHERE rowid = %d", tableName, task.Description, task.Id)
+	doCall(query)
 }

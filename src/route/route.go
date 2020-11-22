@@ -7,16 +7,30 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 )
 
-// type Task structures.Task
+func errHandle(err error) bool {
+	if err != nil {
+		log.Println(err)
+		return true
+	}
+	return false
+}
 
 func AddTask(w http.ResponseWriter, req *http.Request) {
-	body, _ := ioutil.ReadAll(req.Body)
-	bodystr := string(body)
-	if bodystr != "" {
-		dbhandle.CreateTask(&bodystr)
+	body, err := ioutil.ReadAll(req.Body)
+	if errHandle(err) {
+		return
+	}
+
+	task, err := decodeJson(&body)
+	if errHandle(err) {
+		return
+	}
+	bodystr := &task.Description
+
+	if *bodystr != "" {
+		dbhandle.CreateTask(bodystr)
 	}
 	fmt.Fprintf(w, "alright")
 }
@@ -25,8 +39,7 @@ func ReadList(w http.ResponseWriter, req *http.Request) {
 	//returns a json parsed with the id, description, and if it is done
 	tasks := *dbhandle.GetList()
 	jsonData, err := json.Marshal(tasks)
-	if err != nil {
-		fmt.Fprintf(w, "null")
+	if errHandle(err) {
 		return
 	}
 	// fmt.Fprintf(w, string(jsonData))
@@ -37,46 +50,53 @@ func ReadList(w http.ResponseWriter, req *http.Request) {
 func RemoveTask(w http.ResponseWriter, req *http.Request) {
 	// recebe o id da task
 	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		fmt.Fprintf(w, "something went wrong")
+	if errHandle(err) {
 		return
 	}
 
-	num, err := strconv.Atoi(string(body))
-	if err != nil {
-		fmt.Fprintf(w, "NotANumber")
+	task, err := decodeJson(&body)
+	if errHandle(err) {
 		return
 	}
 
-	dbhandle.DeleteTask(num)
+	dbhandle.DeleteTask(task.Id)
 }
 
 func UpdateTaskDone(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		log.Println(err)
+	if errHandle(err) {
 		return
 	}
-	var task dbhandle.Task
-	err = json.Unmarshal(body, &task)
-	if err != nil {
-		log.Println(err)
+
+	task, err := decodeJson(&body)
+	if errHandle(err) {
 		return
 	}
-	dbhandle.UpdateTaskDone(&task)
+
+	dbhandle.UpdateTaskDone(task)
 }
 
 func UpdateTaskDescription(w http.ResponseWriter, req *http.Request) {
 	//recebe um json com os campos id e description
 	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
+	if errHandle(err) {
 		return
 	}
+
+	task, err := decodeJson(&body)
+	if errHandle(err) {
+		return
+	}
+
+	dbhandle.UpdateTaskDescription(task)
+}
+
+func decodeJson(body *[]byte) (*dbhandle.Task, error) {
 	var task dbhandle.Task
-	err = json.Unmarshal(body, &task)
+	err := json.Unmarshal(*body, &task)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Println(err)
+		return nil, err
 	}
-	dbhandle.UpdateTaskDescription(&task)
+	return &task, nil
 }
