@@ -30,19 +30,25 @@ func errHandle(err error) bool {
 	return false
 }
 
-func doCall(query string) {
+func doCall(query string) int64 {
 	db, err := sql.Open(driver, getPath())
 	if errHandle(err) {
-		return
+		return -1
 	}
 	defer db.Close()
 
 	statement, err := db.Prepare(query)
 	if errHandle(err) {
-		return
+		return -1
 	}
-	statement.Exec()
+	result, err := statement.Exec()
+	if errHandle(err) {
+		return -1
+	}
+
+	newID, _ := result.LastInsertId()
 	statement.Close()
+	return newID
 }
 
 func CreateTable() {
@@ -50,8 +56,28 @@ func CreateTable() {
 	doCall(query)
 }
 
-func CreateTask(description *string) {
+func CreateTask(description *string) Task {
 	query := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", %v)", tableName, *description, false)
+	id := doCall(query)
+	var t Task
+	t.Id = int(id)
+	t.Description = *description
+	t.Done = false
+	return t
+}
+
+func DeleteTask(id int) {
+	query := fmt.Sprintf("DELETE FROM %s WHERE rowid = %d", tableName, id)
+	doCall(query)
+}
+
+func UpdateTaskDone(task *Task) {
+	query := fmt.Sprintf("UPDATE %s SET done = %v WHERE rowid = %d", tableName, task.Done, task.Id)
+	doCall(query)
+}
+
+func UpdateTaskDescription(task *Task) {
+	query := fmt.Sprintf("UPDATE %s SET description = \"%s\" WHERE rowid = %d", tableName, task.Description, task.Id)
 	doCall(query)
 }
 
@@ -76,19 +102,4 @@ func GetList() *[]Task {
 		tasks = append(tasks, t)
 	}
 	return &tasks
-}
-
-func DeleteTask(id int) {
-	query := fmt.Sprintf("DELETE FROM %s WHERE rowid = %d", tableName, id)
-	doCall(query)
-}
-
-func UpdateTaskDone(task *Task) {
-	query := fmt.Sprintf("UPDATE %s SET done = %v WHERE rowid = %d", tableName, task.Done, task.Id)
-	doCall(query)
-}
-
-func UpdateTaskDescription(task *Task) {
-	query := fmt.Sprintf("UPDATE %s SET description = \"%s\" WHERE rowid = %d", tableName, task.Description, task.Id)
-	doCall(query)
 }

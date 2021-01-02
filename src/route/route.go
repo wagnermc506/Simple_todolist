@@ -2,7 +2,6 @@ package route
 
 import (
 	"encoding/json"
-	"fmt"
 	"frostwagner/dbhandle"
 	"io/ioutil"
 	"log"
@@ -29,10 +28,18 @@ func AddTask(w http.ResponseWriter, req *http.Request) {
 	}
 	bodystr := &task.Description
 
-	if *bodystr != "" {
-		dbhandle.CreateTask(bodystr)
+	if *bodystr == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte("id: -1"))
 	}
-	fmt.Fprintf(w, "alright")
+
+	taskWithID := dbhandle.CreateTask(bodystr)
+
+	jsonData, _ := json.Marshal(taskWithID)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+
 }
 
 func ReadList(w http.ResponseWriter, req *http.Request) {
