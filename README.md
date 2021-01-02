@@ -16,7 +16,7 @@ Para usar este método, o sistema deve ter o Docker instalado.
 
 ## Build
 
-Na raiz deste diretório, execute o comando:
+Na raiz do projeto, execute o comando:
 
 ``` sh
 $ docker build -t go-todolist .
@@ -51,7 +51,7 @@ $ go build -o ../../build/todolist
 
 ## Run
 
-Para iniciar o server, volte para o diretório raíz do projeto e execute:
+Para iniciar o server, volte para o diretório raiz do projeto e execute:
 
 ```sh
 $ ./build/todolist
