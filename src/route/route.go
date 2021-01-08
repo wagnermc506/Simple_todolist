@@ -2,11 +2,13 @@ package route
 
 import (
 	"encoding/json"
-	"frostwagner/dbhandle"
+	"frostwagner/structures"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
+
+// type task structures.Task
 
 func errHandle(err error) bool {
 	if err != nil {
@@ -17,34 +19,26 @@ func errHandle(err error) bool {
 }
 
 func AddTask(w http.ResponseWriter, req *http.Request) {
+
 	body, err := ioutil.ReadAll(req.Body)
 	if errHandle(err) {
 		return
 	}
 
-	task, err := decodeJson(&body)
-	if errHandle(err) {
-		return
-	}
-	bodystr := &task.Description
+	var task structures.Task
 
-	if *bodystr == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("id: -1"))
-	}
-
-	taskWithID := dbhandle.CreateTask(bodystr)
-
-	jsonData, _ := json.Marshal(taskWithID)
+	task.DecodeFromJson(body)
+	task.Save()
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
+	w.Write(task.EncodeToJson())
 
 }
 
 func ReadList(w http.ResponseWriter, req *http.Request) {
 	//returns a json parsed with the id, description, and if it is done
-	tasks := *dbhandle.GetList()
+
+	tasks := structures.FetchAll()
 	jsonData, err := json.Marshal(tasks)
 	if errHandle(err) {
 		return
@@ -61,49 +55,60 @@ func RemoveTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	task, err := decodeJson(&body)
-	if errHandle(err) {
-		return
-	}
+	var task structures.Task
 
-	dbhandle.DeleteTask(task.Id)
+	task.DecodeFromJson(body)
+	task.Delete()
+
 }
 
-func UpdateTaskDone(w http.ResponseWriter, req *http.Request) {
+func UpdateTask(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if errHandle(err) {
 		return
 	}
 
-	task, err := decodeJson(&body)
-	if errHandle(err) {
-		return
-	}
+	var task structures.Task
+	task.DecodeFromJson(body)
+	task.Save()
 
-	dbhandle.UpdateTaskDone(task)
 }
 
-func UpdateTaskDescription(w http.ResponseWriter, req *http.Request) {
-	//recebe um json com os campos id e description
-	body, err := ioutil.ReadAll(req.Body)
-	if errHandle(err) {
-		return
-	}
+// func UpdateTaskDone(w http.ResponseWriter, req *http.Request) {
+// 	body, err := ioutil.ReadAll(req.Body)
+// 	if errHandle(err) {
+// 		return
+// 	}
 
-	task, err := decodeJson(&body)
-	if errHandle(err) {
-		return
-	}
+// 	task, err := decodeJson(&body)
+// 	if errHandle(err) {
+// 		return
+// 	}
 
-	dbhandle.UpdateTaskDescription(task)
-}
+// 	dbhandle.UpdateTaskDone(task)
+// }
 
-func decodeJson(body *[]byte) (*dbhandle.Task, error) {
-	var task dbhandle.Task
-	err := json.Unmarshal(*body, &task)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return &task, nil
-}
+// func UpdateTaskDescription(w http.ResponseWriter, req *http.Request) {
+// 	//recebe um json com os campos id e description
+// 	body, err := ioutil.ReadAll(req.Body)
+// 	if errHandle(err) {
+// 		return
+// 	}
+
+// 	task, err := decodeJson(&body)
+// 	if errHandle(err) {
+// 		return
+// 	}
+
+// 	dbhandle.UpdateTaskDescription(task)
+// }
+
+// func decodeJson(body *[]byte) (*dbhandle.Task, error) {
+// 	var task dbhandle.Task
+// 	err := json.Unmarshal(*body, &task)
+// 	if err != nil {
+// 		log.Println(err)
+// 		return nil, err
+// 	}
+// 	return &task, nil
+// }

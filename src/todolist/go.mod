@@ -10,5 +10,6 @@ replace frostwagner/structures => ../structures
 
 require (
 	frostwagner/dbhandle v0.0.0-00010101000000-000000000000
+	// frostwagner/dbhandle v0.0.0-00010101000000-000000000000
 	frostwagner/route v0.0.0-00010101000000-000000000000
 )

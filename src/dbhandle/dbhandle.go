@@ -3,14 +3,11 @@ package dbhandle
 import (
 	"database/sql"
 	"fmt"
-	"frostwagner/structures"
 	"log"
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-type Task structures.Task
 
 const (
 	tableName = "tasks"
@@ -56,50 +53,46 @@ func CreateTable() {
 	doCall(query)
 }
 
-func CreateTask(description *string) Task {
+func CreateTask(description *string) int64 {
 	query := fmt.Sprintf("INSERT INTO %s VALUES (\"%s\", %v)", tableName, *description, false)
 	id := doCall(query)
-	var t Task
-	t.Id = int(id)
-	t.Description = *description
-	t.Done = false
-	return t
+	return id
 }
 
-func DeleteTask(id int) {
+func DeleteTask(id int64) {
 	query := fmt.Sprintf("DELETE FROM %s WHERE rowid = %d", tableName, id)
 	doCall(query)
 }
 
-func UpdateTaskDone(task *Task) {
-	query := fmt.Sprintf("UPDATE %s SET done = %v WHERE rowid = %d", tableName, task.Done, task.Id)
+func UpdateTask(id int64, description string, done bool) {
+	query := fmt.Sprintf("UPDATE %s SET description = \"%s\", done = %v WHERE rowid = %d", tableName, description, done, id)
 	doCall(query)
 }
 
-func UpdateTaskDescription(task *Task) {
-	query := fmt.Sprintf("UPDATE %s SET description = \"%s\" WHERE rowid = %d", tableName, task.Description, task.Id)
-	doCall(query)
-}
+// func UpdateTaskDone(task *Task) {
+// 	query := fmt.Sprintf("UPDATE %s SET done = %v WHERE rowid = %d", tableName, task.Done, task.Id)
+// 	doCall(query)
+// }
 
-func GetList() *[]Task {
-	tasks := make([]Task, 0)
+// func UpdateTaskDescription(task *Task) {
+// 	query := fmt.Sprintf("UPDATE %s SET description = \"%s\" WHERE rowid = %d", tableName, task.Description, task.Id)
+// 	doCall(query)
+// }
+
+func GetList() *sql.Rows {
+	// tasks := make([]Task, 0)
 	db, err := sql.Open(driver, getPath())
 	if err != nil {
-		log.Println(err)
-		return &tasks
+		log.Fatalln(err)
 	}
 	defer db.Close()
 	rows, err := db.Query(fmt.Sprintf("SELECT rowid, description, done FROM %s", tableName))
 	if err != nil {
-		log.Println(err)
-		return &tasks
+		log.Fatal(err)
 	}
-	defer rows.Close()
+	// defer rows.Close()
 
-	var t Task
-	for rows.Next() {
-		rows.Scan(&t.Id, &t.Description, &t.Done)
-		tasks = append(tasks, t)
-	}
-	return &tasks
+	// var t Task
+
+	return rows
 }
